@@ -7,13 +7,14 @@ START_DATE=$(($NOW - $NOW % $DAY - 20 * DAY))
 
 _cleanContainer() {
     echo "removing Solr container"
-    docker stop solr 2>/dev/null
-    docker rm solr 2>/dev/null
+    docker stop solr &> /dev/null
+    docker rm solr &> /dev/null
 }
 
 trap _cleanContainer SIGINT SIGTERM
 
 _cleanContainer
+echo "Starting Solr"
 docker run -d \
     --name solr \
     -p 8983:8983 \
@@ -108,7 +109,7 @@ echo "
 
 Solr query back-office can be reached on http://localhost:8983/solr/#/core/query
 
-Press Enter to exit and shut solr down"
+Press Enter to exit and shut Solr down"
 
 read e
 _cleanContainer
