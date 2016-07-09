@@ -1,38 +1,51 @@
 #!/bin/bash
 
-START_DATE=1451606400
 DAY=$((3600 * 24))
+NOW=$(date +%s)
+MAX=2524607999
+START_DATE=$(($NOW - $NOW % $DAY - 20 * DAY))
 
-docker stop solr 2>/dev/null
-docker rm solr 2>/dev/null
-docker run --name solr -d -p 8983:8983 solr:alpine
+_cleanContainer() {
+    echo "removing Solr container"
+    docker stop solr 2>/dev/null
+    docker rm solr 2>/dev/null
+}
+
+trap _cleanContainer SIGINT SIGTERM
+
+_cleanContainer
+docker run -d \
+    --name solr \
+    -p 8983:8983 \
+    -v `pwd`/jts-1.14.jar:/opt/solr/server/solr-webapp/webapp/WEB-INF/lib/jts-1.14.jar \
+    solr:alpine
 
 echo "Giving some time for solr to start..."
-sleep 10
+docker exec -t solr /opt/docker-solr/scripts/wait-for-solr.sh
 
 echo "Solr can be reached on http://localhost:8983/"
 
-echo "Creating our core"
-docker exec -t --user=solr solr bin/solr create_core -c core
+echo "Creating core"
+docker exec -t --user=solr solr bin/solr create_core -c core &> /dev/null
 
 echo "Creating multivalued geopoint type"
-DATA='{
+read -r -d '' DATA <<-EOF
+{
   "add-field-type" : {
     "name": "vector_2d",
     "class": "solr.SpatialRecursivePrefixTreeFieldType",
+    "spatialContextFactory": "org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory",
     "geo": false,
     "distErrPct": 0,
     "maxDistErr": 1,
     "distanceUnits": "degrees",
-    "worldBounds": "ENVELOPE(0, 2524607999, 2524607999, 0)",
-    "prefixTree": "packedQuad"
+    "worldBounds": "ENVELOPE(0, $MAX, $MAX, 0)"
   }
-}'
-echo $DATA
+}
+EOF
+curl -H "Content-type: application/json" -d "$DATA" http://localhost:8983/solr/core/schema  -s -o /dev/null
 
-curl -H "Content-type: application/json" -d "$DATA" http://localhost:8983/solr/core/schema 
-
-echo "Adding our field"
+echo "Adding field"
 DATA='{
   "add-field":{
     "name": "date_intervals",
@@ -42,8 +55,7 @@ DATA='{
     "multiValued": true
   }
 }'
-echo $DATA
-curl -H "Content-type: application/json" -d "$DATA" http://localhost:8983/solr/core/schema
+curl -H "Content-type: application/json" -d "$DATA" http://localhost:8983/solr/core/schema -s -o /dev/null
 
 SHELDON="\"$START_DATE $(($START_DATE + $DAY))\""
 PENNY="\"$START_DATE $(($START_DATE + 2 * $DAY))\""
@@ -65,11 +77,39 @@ LEONARD="{\"id\": \"leonard\", \"date_intervals\": [ $LEONARD ] }"
 RAJ="{\"id\": \"raj\", \"date_intervals\": [ $RAJ ] }"
 HOWARD="{\"id\": \"howard\", \"date_intervals\": [ $HOWARD ] }"
 
-echo $SHELDON
+echo "Adding documents"
+for who in SHELDON PENNY LEONARD RAJ HOWARD; do
+    echo "  $who"
+    curl \
+        -o /dev/nul -s \
+        -H "Content-type: application/json" \
+        -d "$(eval "echo \$$who")" http://localhost:8983/solr/core/update/json/docs -o /dev/null -s \
+        http://localhost:8983/solr/core/update/json/docs
+done
+curl http://localhost:8983/solr/core/update?commit=true -o /dev/null -s
 
-curl -H "Content-type: application/json" -d "$SHELDON" http://localhost:8983/solr/core/update/json/docs
-curl -H "Content-type: application/json" -d "$PENNY" http://localhost:8983/solr/core/update/json/docs
-curl -H "Content-type: application/json" -d "$LEONARD" http://localhost:8983/solr/core/update/json/docs
-curl -H "Content-type: application/json" -d "$RAJ" http://localhost:8983/solr/core/update/json/docs
-curl -H "Content-type: application/json" -d "$HOWARD" http://localhost:8983/solr/core/update/json/docs
-curl http://localhost:8983/solr/core/update?commit=true
+
+echo "
+
+
+
+_______________________________________________________________________________
+
+Get who is in now:
+
+    curl http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=date_intervals:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on
+
+
+"
+
+curl "http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=date_intervals:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on"
+
+echo "
+
+Solr query back-office can be reached on http://localhost:8983/solr/#/core/query
+
+Press Enter to exit and shut solr down"
+
+read e
+_cleanContainer
+
