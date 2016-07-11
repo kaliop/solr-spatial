@@ -33,7 +33,7 @@ echo "Creating multivalued geopoint type"
 read -r -d '' DATA <<-EOF
 {
   "add-field-type" : {
-    "name": "vector_2d",
+    "name": "date_point",
     "class": "solr.SpatialRecursivePrefixTreeFieldType",
     "spatialContextFactory": "org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory",
     "geo": false,
@@ -49,8 +49,8 @@ curl -H "Content-type: application/json" -d "$DATA" http://localhost:8983/solr/c
 echo "Adding field"
 DATA='{
   "add-field":{
-    "name": "date_intervals",
-    "type": "vector_2d",
+    "name": "dates",
+    "type": "date_point",
     "stored": true,
     "indexed": true,
     "multiValued": true
@@ -72,11 +72,11 @@ for i in {1..100}; do
     HOWARD="$HOWARD, \"$(($START_DATE + $i * 7 * $DAY)) $(($START_DATE + (7 * ($i + 1) - 2) * $DAY))\""
 done
 
-SHELDON="{\"id\": \"sheldon\", \"date_intervals\": [ $SHELDON ] }"
-PENNY="{\"id\": \"penny\", \"date_intervals\": [ $PENNY ] }"
-LEONARD="{\"id\": \"leonard\", \"date_intervals\": [ $LEONARD ] }"
-RAJ="{\"id\": \"raj\", \"date_intervals\": [ $RAJ ] }"
-HOWARD="{\"id\": \"howard\", \"date_intervals\": [ $HOWARD ] }"
+SHELDON="{\"id\": \"sheldon\", \"dates\": [ $SHELDON ] }"
+PENNY="{\"id\": \"penny\", \"dates\": [ $PENNY ] }"
+LEONARD="{\"id\": \"leonard\", \"dates\": [ $LEONARD ] }"
+RAJ="{\"id\": \"raj\", \"dates\": [ $RAJ ] }"
+HOWARD="{\"id\": \"howard\", \"dates\": [ $HOWARD ] }"
 
 echo "Adding documents"
 for who in SHELDON PENNY LEONARD RAJ HOWARD; do
@@ -98,12 +98,12 @@ _______________________________________________________________________________
 
 Get who is in now:
 
-    curl http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=date_intervals:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on
+    curl http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=dates:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on
 
 
 "
 
-curl "http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=date_intervals:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on"
+curl "http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=dates:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on"
 
 echo "
 
