@@ -65,11 +65,11 @@ RAJ="\"$START_DATE $(($START_DATE + 4 * $DAY))\""
 HOWARD="\"$START_DATE $(($START_DATE + 5 * $DAY))\""
 
 for i in {1..100}; do
-  SHELDON="$SHELDON, \"$(($START_DATE + $i * 3 * $DAY)) $(($START_DATE + ($i * 3 + 1) * $DAY))\""
-  PENNY="$PENNY, \"$(($START_DATE + $i * 4 * $DAY)) $(($START_DATE + ($i * 4 + 1) * $DAY))\""
-  LEONARD="$LEONARD, \"$(($START_DATE + $i * 5 * $DAY)) $(($START_DATE + ($i * 5 + 1) * $DAY))\""
-  RAJ="$RAJ, \"$(($START_DATE + $i * 6 * $DAY)) $(($START_DATE + ($i * 6 + 1) * $DAY))\""
-  HOWARD="$HOWARD, \"$(($START_DATE + $i * 7 * $DAY)) $(($START_DATE + ($i * 7 + 1) * $DAY))\""
+    SHELDON="$SHELDON, \"$(($START_DATE + $i * 3 * $DAY)) $(($START_DATE + (3 * ($i + 1) - 2) * $DAY))\""
+    PENNY="$PENNY, \"$(($START_DATE + $i * 4 * $DAY)) $(($START_DATE + (4 * ($i + 1) - 2) * $DAY))\""
+    LEONARD="$LEONARD, \"$(($START_DATE + $i * 5 * $DAY)) $(($START_DATE + (5 * ($i + 1) - 2) * $DAY))\""
+    RAJ="$RAJ, \"$(($START_DATE + $i * 6 * $DAY)) $(($START_DATE + (6 * ($i + 1) - 2) * $DAY))\""
+    HOWARD="$HOWARD, \"$(($START_DATE + $i * 7 * $DAY)) $(($START_DATE + (7 * ($i + 1) - 2) * $DAY))\""
 done
 
 SHELDON="{\"id\": \"sheldon\", \"date_intervals\": [ $SHELDON ] }"
