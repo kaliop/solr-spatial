@@ -12,6 +12,7 @@ This project is a Proof Of Concept of using Solr spatial search ability to tackl
 ## Prerequisites
 
 * bash
+* curl
 * docker
 
 ## How to run
