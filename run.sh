@@ -98,12 +98,12 @@ _______________________________________________________________________________
 
 Get who is in now:
 
-    curl http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=dates:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on
+  curl \"http://localhost:8983/solr/core/select/?wt=json&indent=on&q=*:*&fl=id&fq=dates:\[\\\"0+$(($NOW - 10))\\\"+TO+\\\"$(($NOW + 10))+2524607999\\\"\]\"
 
 
 "
 
-curl "http://localhost:8983/solr/core/select?q=*:*&fl=id&fq=dates:\"Intersects(POLYGON((0+$NOW,+$NOW+$NOW,+$NOW+$MAX,+0+$MAX,+0+$NOW)))\"&wt=json&indent=on"
+curl "http://localhost:8983/solr/core/select/?wt=json&indent=on&q=*:*&fl=id&fq=dates:\[\"0+$(($NOW - 10))\"+TO+\"$(($NOW + 10))+2524607999\"\]"
 
 echo "
 
